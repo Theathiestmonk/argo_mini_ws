@@ -44,8 +44,8 @@ controller_server:
       movement_time_allowance: 10.0
     goal_checker:
       plugin: "nav2_controller::SimpleGoalChecker"
-      xy_goal_tolerance: 0.25
-      yaw_goal_tolerance: 0.25
+      xy_goal_tolerance: 0.5
+      yaw_goal_tolerance: 0.8
       stateful: true
     FollowPath:
       plugin: "dwb_core::DWBLocalPlanner"
@@ -69,7 +69,7 @@ controller_server:
       PathAlign.forward_point_distance: 0.1
       GoalAlign.scale: 6.0
       GoalAlign.forward_point_distance: 0.1
-      PathDist.scale: 32.0
+      PathDist.scale: 16.0
       GoalDist.scale: 24.0
 
 planner_server:
@@ -83,7 +83,7 @@ planner_server:
       max_iterations: 1000000
       motion_model_for_search: "REEDS_SHEPP"
       angle_quantization_bins: 72
-      minimum_turning_radius: 0.50
+      minimum_turning_radius: 0.57
       smooth_path: true
 
 local_costmap:
@@ -113,7 +113,7 @@ local_costmap:
       inflation_layer:
         plugin: "nav2_costmap_2d::InflationLayer"
         cost_scaling_factor: 5.0
-        inflation_radius: 0.15
+        inflation_radius: 0.25
 
 global_costmap:
   global_costmap:
@@ -143,7 +143,7 @@ global_costmap:
       inflation_layer:
         plugin: "nav2_costmap_2d::InflationLayer"
         cost_scaling_factor: 5.0
-        inflation_radius: 0.15
+        inflation_radius: 0.25
 
 map_server:
   ros__parameters:
