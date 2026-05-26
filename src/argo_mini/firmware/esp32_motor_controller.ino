@@ -15,7 +15,9 @@
 #define THROTTLE_R DAC_CHANNEL_2   // GPIO26
 
 // ── Direction pins ─────────────────────────────────────────────────────────
-// HIGH = reverse, LOW = forward  (controller reverse-enable pin)
+// LOW = reverse (active-LOW: controller pulls pin to 5V internally;
+//                pulling to GND activates reverse)
+// HIGH (or floating) = forward
 #define DIR_L 2    // GPIO2 → left motor controller reverse pin
 #define DIR_R 4    // GPIO4 → right motor controller reverse pin
 
@@ -63,8 +65,8 @@ void setDAC(int l, int r) {
   leftReverse  = (l < 0);
   rightReverse = (r < 0);
 
-  digitalWrite(DIR_L, leftReverse  ? HIGH : LOW);
-  digitalWrite(DIR_R, rightReverse ? HIGH : LOW);
+  digitalWrite(DIR_L, leftReverse  ? LOW : HIGH);   // active-LOW: LOW = reverse
+  digitalWrite(DIR_R, rightReverse ? LOW : HIGH);
 
   if (l == 0) dac_output_voltage(THROTTLE_L, 0);
   else        dac_output_voltage(THROTTLE_L, constrain(abs(l), DAC_MIN, DAC_MAX));
@@ -103,9 +105,9 @@ void setup() {
   attachInterrupt(digitalPinToInterrupt(HALL_RB), rightISR, RISING);
   attachInterrupt(digitalPinToInterrupt(HALL_RC), rightISR, RISING);
 
-  // Direction pins — default forward
-  pinMode(DIR_L, OUTPUT); digitalWrite(DIR_L, LOW);
-  pinMode(DIR_R, OUTPUT); digitalWrite(DIR_R, LOW);
+  // Direction pins — default forward (HIGH = forward, LOW = reverse active-LOW)
+  pinMode(DIR_L, OUTPUT); digitalWrite(DIR_L, HIGH);
+  pinMode(DIR_R, OUTPUT); digitalWrite(DIR_R, HIGH);
 
   dac_output_enable(THROTTLE_L);
   dac_output_enable(THROTTLE_R);
