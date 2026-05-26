@@ -10,7 +10,7 @@ import time
 WHEEL_RADIUS    = 0.0762
 WHEEL_BASE      = 0.40
 POLE_PAIRS      = 15
-TICKS_PER_REV   = POLE_PAIRS * 3
+TICKS_PER_REV   = POLE_PAIRS * 6   # CHANGE mode: both edges × 3 phases = 90/rev
 METERS_PER_TICK = (2 * math.pi * WHEEL_RADIUS) / TICKS_PER_REV
 
 DAC_STOP       = 0

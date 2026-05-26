@@ -26,7 +26,9 @@
 // Sign of the command determines direction via DIR_L / DIR_R.
 #define DAC_MIN    100
 #define DAC_MAX    120
-#define POLE_PAIRS 15
+#define POLE_PAIRS  15
+// CHANGE mode: both edges on 3 phases → POLE_PAIRS × 6 ticks/rev
+#define TICKS_PER_REV (POLE_PAIRS * 6)
 
 // ── Ramp parameters ────────────────────────────────────────────────────────
 #define RAMP_STEP  1    // 1 DAC unit per cycle
@@ -97,13 +99,13 @@ void setup() {
   pinMode(HALL_LA, INPUT); pinMode(HALL_LB, INPUT); pinMode(HALL_LC, INPUT);
   pinMode(HALL_RA, INPUT); pinMode(HALL_RB, INPUT); pinMode(HALL_RC, INPUT);
 
-  // RISING interrupt per phase per wheel (3 phases × RISING = 45 ticks/rev)
-  attachInterrupt(digitalPinToInterrupt(HALL_LA), leftISR,  RISING);
-  attachInterrupt(digitalPinToInterrupt(HALL_LB), leftISR,  RISING);
-  attachInterrupt(digitalPinToInterrupt(HALL_LC), leftISR,  RISING);
-  attachInterrupt(digitalPinToInterrupt(HALL_RA), rightISR, RISING);
-  attachInterrupt(digitalPinToInterrupt(HALL_RB), rightISR, RISING);
-  attachInterrupt(digitalPinToInterrupt(HALL_RC), rightISR, RISING);
+  // CHANGE interrupt per phase per wheel (3 phases × both edges = 90 ticks/rev)
+  attachInterrupt(digitalPinToInterrupt(HALL_LA), leftISR,  CHANGE);
+  attachInterrupt(digitalPinToInterrupt(HALL_LB), leftISR,  CHANGE);
+  attachInterrupt(digitalPinToInterrupt(HALL_LC), leftISR,  CHANGE);
+  attachInterrupt(digitalPinToInterrupt(HALL_RA), rightISR, CHANGE);
+  attachInterrupt(digitalPinToInterrupt(HALL_RB), rightISR, CHANGE);
+  attachInterrupt(digitalPinToInterrupt(HALL_RC), rightISR, CHANGE);
 
   // Direction pins — default forward (HIGH = forward, LOW = reverse active-LOW)
   pinMode(DIR_L, OUTPUT); digitalWrite(DIR_L, HIGH);
@@ -159,8 +161,8 @@ void loop() {
     long rt = rightTicks;
     interrupts();
 
-    float lRPM = (lp / elapsed) * 60.0f / (POLE_PAIRS * 3);
-    float rRPM = (rp / elapsed) * 60.0f / (POLE_PAIRS * 3);
+    float lRPM = (lp / elapsed) * 60.0f / TICKS_PER_REV;
+    float rRPM = (rp / elapsed) * 60.0f / TICKS_PER_REV;
 
     // Signed ticks: positive = forward, negative = reverse
     Serial.printf("O %ld %ld\n", lt, rt);
