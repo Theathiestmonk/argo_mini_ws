@@ -83,14 +83,8 @@ ros2 run argo_mini scan_relay &
 RELAY_PID=$!
 sleep 2
 
-# ── 5. Static TF: map → odom ──────────────────────────────────────────────
-echo "[argo] Starting static TFs..."
-ros2 run tf2_ros static_transform_publisher \
-  --x 0.0 --y 0.0 --z 0.0 \
-  --roll 0.0 --pitch 0.0 --yaw 0.0 \
-  --frame-id map --child-frame-id odom &
-TF_PID=$!
-sleep 1
+# map→odom is published by AMCL — no static TF here (they conflict)
+TF_PID=""
 
 # ── 6. Map server ─────────────────────────────────────────────────────────
 echo "[argo] Starting map_server..."
