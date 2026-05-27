@@ -24,11 +24,15 @@ class SerialBridge(Node):
         self.declare_parameter('port', '/dev/ttyUSB1')
         self.declare_parameter('baud', 115200)
         self.declare_parameter('forward_only', False)
+        self.declare_parameter('left_tick_scale', 1.0)
         port = self.get_parameter('port').value
         baud = self.get_parameter('baud').value
-        self.forward_only = self.get_parameter('forward_only').value
+        self.forward_only    = self.get_parameter('forward_only').value
+        self.left_tick_scale = self.get_parameter('left_tick_scale').value
         if self.forward_only:
             self.get_logger().info('forward_only=true: reverse commands blocked')
+        if self.left_tick_scale != 1.0:
+            self.get_logger().info(f'left_tick_scale={self.left_tick_scale:.3f}')
 
         try:
             self.ser = serial.Serial(port, baud, timeout=0.05)
@@ -152,7 +156,7 @@ class SerialBridge(Node):
             self.prev_right = right_ticks
             return
 
-        dl = (left_ticks  - self.prev_left)  * METERS_PER_TICK
+        dl = (left_ticks  - self.prev_left)  * METERS_PER_TICK * self.left_tick_scale
         dr = (right_ticks - self.prev_right) * METERS_PER_TICK
         self.prev_left  = left_ticks
         self.prev_right = right_ticks
