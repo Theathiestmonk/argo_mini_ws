@@ -203,7 +203,7 @@ local_costmap:
         # raytrace clearing, which causes ghost obstacles and lethal-space errors).
         observation_sources: scan
         scan:
-          topic: /scan
+          topic: /scan_corrected
           max_obstacle_height: 2.0
           clearing: true
           marking: true
@@ -238,7 +238,7 @@ global_costmap:
         enabled: true
         observation_sources: scan
         scan:
-          topic: /scan
+          topic: /scan_corrected
           max_obstacle_height: 2.0
           clearing: true
           marking: true

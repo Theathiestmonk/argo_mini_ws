@@ -17,11 +17,13 @@ DAC_FWD       = 107
 POLE_PAIRS    = 15
 TICKS_PER_REV = POLE_PAIRS * 6   # CHANGE mode firmware (90/rev)
 
-lock    = threading.Lock()
-rpm_l   = 0.0
-rpm_r   = 0.0
-label   = 'STOP'
-running = True
+lock      = threading.Lock()
+rpm_l     = 0.0
+rpm_r     = 0.0
+total_l   = 0
+total_r   = 0
+label     = 'STOP'
+running   = True
 
 MOVES = {
     'w': ( DAC_FWD,  DAC_FWD,  'FORWARD'),
@@ -33,8 +35,9 @@ MOVES = {
 }
 
 def reader(ser):
-    global rpm_l, rpm_r, running
+    global rpm_l, rpm_r, total_l, total_r, running
     prev_lt = prev_rt = prev_ts = None
+    start_lt = start_rt = None
     while running:
         try:
             raw = ser.readline().decode('utf-8', errors='ignore').strip()
@@ -47,6 +50,8 @@ def reader(ser):
             continue
         lt, rt = int(parts[1]), int(parts[2])
         now = time.monotonic()
+        if start_lt is None:
+            start_lt, start_rt = lt, rt
         if prev_lt is not None:
             dt = now - prev_ts
             if dt > 0:
@@ -54,13 +59,19 @@ def reader(ser):
                 rr = (abs(rt - prev_rt) / TICKS_PER_REV) / dt * 60.0
                 with lock:
                     rpm_l, rpm_r = rl, rr
+                    total_l = abs(lt - start_lt)
+                    total_r = abs(rt - start_rt)
         prev_lt, prev_rt, prev_ts = lt, rt, now
 
 def display():
     while running:
         with lock:
             rl, rr, lbl = rpm_l, rpm_r, label
-        sys.stdout.write(f'\r  {lbl:<12}  L: {rl:6.1f} RPM   R: {rr:6.1f} RPM   ')
+            tl, tr = total_l, total_r
+        ratio = tr / tl if tl > 0 else 1.0
+        sys.stdout.write(
+            f'\r  {lbl:<12}  L:{rl:5.1f}rpm  R:{rr:5.1f}rpm'
+            f'  ticks L:{tl:6d} R:{tr:6d}  scale={ratio:.3f}  ')
         sys.stdout.flush()
         time.sleep(0.05)
 
