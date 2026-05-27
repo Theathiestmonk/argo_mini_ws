@@ -132,11 +132,14 @@ class DepthSafetyShield(Node):
             self.last_depth_ts = now
             return
 
-        # Read XYZ points (downsampled by stride)
+        # Read XYZ points (downsampled by stride).
+        # Use read_points with field_names and convert via list comprehension to
+        # handle non-packed layouts (e.g. 16-byte stride with 4-byte padding).
         try:
             pts_raw = np.array(
-                list(pc2.read_points(
-                    msg, field_names=('x', 'y', 'z'), skip_nans=True)),
+                [(p[0], p[1], p[2])
+                 for p in pc2.read_points(
+                     msg, field_names=('x', 'y', 'z'), skip_nans=True)],
                 dtype=np.float32)
         except Exception as e:
             self.get_logger().warn(f'PointCloud2 read error: {e}', throttle_duration_sec=5.0)
