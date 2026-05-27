@@ -31,7 +31,7 @@ class SerialBridge(Node):
             self.get_logger().info('forward_only=true: reverse commands blocked')
 
         try:
-            self.ser = serial.Serial(port, baud, timeout=0.01)
+            self.ser = serial.Serial(port, baud, timeout=0.05)
             time.sleep(2.0)
             self.ser.reset_input_buffer()
             self.get_logger().info(f'Connected to ESP32 on {port}')
@@ -117,12 +117,14 @@ class SerialBridge(Node):
 
     def read_serial(self):
         try:
-            if self.ser.in_waiting > 200:
+            if self.ser.in_waiting > 400:
                 self.ser.reset_input_buffer()
                 return
-            while self.ser.in_waiting:
+            while True:
                 raw = self.ser.readline().decode(
                     'utf-8', errors='ignore').strip()
+                if not raw:
+                    break
                 if raw.startswith('O '):
                     parts = raw.split()
                     if len(parts) == 3:
