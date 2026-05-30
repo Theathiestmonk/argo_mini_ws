@@ -16,7 +16,7 @@ METERS_PER_TICK = (2 * math.pi * WHEEL_RADIUS) / TICKS_PER_REV
 # ESC DAC range
 DAC_STOP = 0
 DAC_MIN  = 104   # minimum DAC that overcomes ESC deadzone and spins the wheel
-DAC_MAX  = 120   # maximum ESC DAC (full hardware range = 21 levels)
+DAC_MAX  = 108   # maximum ESC DAC (full hardware range = 21 levels)
 
 # Speed mapping — must match nav2 vx_max
 VMAX   = 0.40    # m/s: cmd_vel at which DAC_MAX is sent

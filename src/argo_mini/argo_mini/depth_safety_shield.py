@@ -46,14 +46,14 @@ class DepthSafetyShield(Node):
         super().__init__('depth_safety_shield')
 
         # ── parameters ───────────────────────────────────────────────────────
-        self.declare_parameter('stop_distance',       0.40)   # m — hard stop (base_link; robot front is ~0.26m ahead of origin)
-        self.declare_parameter('slow_distance',       0.70)  # m — begin proportional scaling
-        self.declare_parameter('slow_factor',         0.40)   # fraction at edge of slow zone (unused: now proportional)
-        self.declare_parameter('lateral_margin',      0.35)   # m — half robot width + buffer
-        self.declare_parameter('min_obstacle_height', 0.03)   # m — ignore floor reflections
+        self.declare_parameter('stop_distance',       0.70)   # m — hard stop
+        self.declare_parameter('slow_distance',       1.0)   # m — begin scaling
+        self.declare_parameter('slow_factor',         0.40)   # fraction of linear.x
+        self.declare_parameter('lateral_margin',      0.40)   # m — half robot width + buffer
+        self.declare_parameter('min_obstacle_height', 0.05)   # m — ignore floor reflections
         self.declare_parameter('max_obstacle_height', 1.60)   # m — ignore overhead structure
         self.declare_parameter('depth_timeout',       3.0)    # s — stale-data window
-        self.declare_parameter('downsample_stride',   2)      # process every Nth point row/col
+        self.declare_parameter('downsample_stride',   4)      # process every Nth point row/col
         self.declare_parameter('input_topic',  '/cmd_vel_smoothed')
         self.declare_parameter('output_topic', '/cmd_vel')
         self.declare_parameter('depth_topic',
@@ -83,7 +83,7 @@ class DepthSafetyShield(Node):
 
         # Rate-limit depth processing: track last processed time
         self._last_proc    = 0.0
-        self._proc_interval = 0.10      # ~10 Hz processing cap
+        self._proc_interval = 0.15      # ~7 Hz processing cap
 
         # ── publishers / subscribers ─────────────────────────────────────────
         self.cmd_pub = self.create_publisher(Twist, out_topic, 10)
@@ -211,11 +211,9 @@ class DepthSafetyShield(Node):
             out.linear.x = min(msg.linear.x, 0.0)
 
         elif self.state == self.SLOW:
-            # Proportional braking: scale linearly from 1.0 (at slow_dist) to 0.0 (at stop_dist)
+            # Scale linear to slow_factor, always allow reverse
             if msg.linear.x > 0.0:
-                ratio = max(0.0, (self.closest_fwd - self.stop_dist) /
-                            (self.slow_dist - self.stop_dist))
-                out.linear.x = msg.linear.x * ratio
+                out.linear.x = msg.linear.x * self.slow_factor
             else:
                 out.linear.x = msg.linear.x
 
@@ -240,9 +238,6 @@ class DepthSafetyShield(Node):
             self.get_logger().info(
                 f'Safety state: {prev} → {self.state}  '
                 f'(closest={d:.2f}m)')
-        elif self.state in (self.SLOW, self.STOP):
-            self.get_logger().info(
-                f'[{self.state}] closest={d:.2f}m', throttle_duration_sec=1.0)
 
     def _watchdog(self):
         if self.last_depth_ts is None:
