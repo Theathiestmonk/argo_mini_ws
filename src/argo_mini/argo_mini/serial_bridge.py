@@ -164,13 +164,21 @@ class SerialBridge(Node):
             self.prev_right = right_ticks
             return
 
-        # Firmware signs ticks correctly: ISR decrements when the wheel runs in
-        # reverse, so the delta is already negative for backward motion.
-        # No additional sign correction is needed here.
         dl = (left_ticks  - self.prev_left)  * METERS_PER_TICK * self.left_tick_scale
         dr = (right_ticks - self.prev_right) * METERS_PER_TICK
         self.prev_left  = left_ticks
         self.prev_right = right_ticks
+
+        # Sanity check: reject physically impossible deltas.
+        # At VMAX=0.40 m/s with a 50 ms odom period the maximum plausible
+        # distance per tick packet is ~25 mm.  A delta above 0.10 m almost
+        # certainly means the ESP32 rebooted and ticks wrapped to zero,
+        # or the serial line delivered garbage.
+        if abs(dl) > 0.10 or abs(dr) > 0.10:
+            self.get_logger().warn(
+                f'Implausible tick delta dl={dl:.3f} dr={dr:.3f} — '
+                'skipping (ESP32 reboot or serial glitch)')
+            return
 
         d_center = (dl + dr) / 2.0
         d_theta  = (dr - dl) / WHEEL_BASE
