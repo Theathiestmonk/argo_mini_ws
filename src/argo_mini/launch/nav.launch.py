@@ -54,6 +54,7 @@ def generate_launch_description():
     nav2_nodes = [
         'map_server',
         'amcl',
+        'behavior_server',
         'controller_server',
         'planner_server',
         'velocity_smoother',
@@ -176,7 +177,17 @@ def generate_launch_description():
             parameters=[nav2_yaml],
         ),
 
-        # ── 11. Nav2 Lifecycle Manager ───────────────────────────────────────
+        # ── 11. Behavior Server (Spin / BackUp / Wait recoveries) ───────────
+        LifecycleNode(
+            package='nav2_behaviors',
+            executable='behavior_server',
+            name='behavior_server',
+            output='screen',
+            parameters=[nav2_yaml],
+            remappings=[('cmd_vel', '/cmd_vel_raw')],
+        ),
+
+        # ── 12. Nav2 Lifecycle Manager ───────────────────────────────────────
         Node(
             package='nav2_lifecycle_manager',
             executable='lifecycle_manager',
@@ -189,7 +200,7 @@ def generate_launch_description():
             }],
         ),
 
-        # ── 12. Depth Safety Shield  /cmd_vel_smoothed → /cmd_vel ────────────
+        # ── 13. Depth Safety Shield  /cmd_vel_smoothed → /cmd_vel ────────────
         # Acts as the safety layer between Nav2's smoothed output and the motors.
         # Reads depth PointCloud2, stops/slows the robot if an obstacle is close,
         # and re-publishes a filtered cloud on /depth_filtered for the costmap.
@@ -214,7 +225,7 @@ def generate_launch_description():
             }],
         ),
 
-        # ── 13. Camera static TF bridge ──────────────────────────────────────
+        # ── 14. Camera static TF bridge ──────────────────────────────────────
         # HP60C SDK publishes depth0/points with frame_id: ascamera_hp60c_color_0
         # Our URDF defines camera_depth_optical_frame at the same physical location.
         # Identity transform bridges the two so TF lookups succeed.
@@ -230,7 +241,7 @@ def generate_launch_description():
             ],
         ),
 
-        # ── 14. HP60C Depth Camera (optional) ───────────────────────────────
+        # ── 15. HP60C Depth Camera (optional) ───────────────────────────────
         # Only launched when use_camera:=true.
         # The EAI SDK provides its own ROS2 node; adjust package/executable names
         # to match your SDK build.  The SDK node must be sourced separately:
@@ -250,7 +261,7 @@ def generate_launch_description():
             ],
         ),
 
-        # ── 15. RViz2 (optional) ─────────────────────────────────────────────
+        # ── 16. RViz2 (optional) ─────────────────────────────────────────────
         Node(
             condition=IfCondition(use_rviz),
             package='rviz2',
