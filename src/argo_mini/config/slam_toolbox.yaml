@@ -3,43 +3,37 @@ slam_toolbox:
     odom_frame:   odom
     map_frame:    map
     base_frame:   base_link
-    scan_topic:   /scan
-    mode:         mapping
+    scan_topic:   /scan_corrected   # timestamp-corrected scan from scan_relay
+    mode:         localization
     use_sim_time: false
 
-    # Map resolution — 5 cm is a good balance for indoor navigation
-    resolution:              0.05
+    # map_file_name is set at launch time via nav.launch.py (map:= argument).
+    # It must point to the .posegraph file saved during the mapping session
+    # (pass the path WITHOUT the .posegraph extension).
+    map_file_name: ""
 
-    # A1 max reliable indoor range; avoids glass/mirror false returns
-    max_laser_range:         6.0
+    resolution:      0.05
+    max_laser_range: 6.0
 
-    # Add a pose graph node every 10 cm or 2° — denser graph, better map
-    # (was 0.2 m / 0.05 rad — too coarse for slow indoor mapping)
-    minimum_travel_distance: 0.10
-    minimum_travel_heading:  0.035
+    # Tighter update cadence for responsive localization
+    minimum_travel_distance: 0.05
+    minimum_travel_heading:  0.017   # ~1 degree
 
-    # Repaint the OGM grid twice per second (was 1.0 s)
-    map_update_interval:     0.5
+    # Map publish less often — it is static in localization mode
+    map_update_interval: 2.0
 
-    # Scan matching — keep both on for best accuracy
-    use_scan_matching:       true
-    use_scan_barycenter:     true
+    use_scan_matching:    true
+    use_scan_barycenter:  true
 
-    # Larger buffer so fast turns don't starve the correlator
-    scan_buffer_size:                    30
-    scan_buffer_maximum_scan_distance:   6.0
+    # Smaller buffer — localization only needs recent scans
+    scan_buffer_size:                  10
+    scan_buffer_maximum_scan_distance: 6.0
 
-    # Loop closure — tighter thresholds catch small loops reliably
-    do_loop_closing:                     true
-    loop_search_maximum_distance:        5.0
-    loop_match_minimum_chain_size:       5
-    loop_match_maximum_variance_coarse:  3.0
-    loop_match_minimum_response_coarse:  0.35
-    loop_match_minimum_response_fine:    0.50
+    # Loop closing wastes CPU in localization mode — disable
+    do_loop_closing: false
 
-    # Penalise large angular corrections more than distance ones
-    # (wheel odometry heading drift is the main error source)
     distance_variance_penalty: 0.5
     angle_variance_penalty:    1.0
 
-    enable_interactive_mode: true
+    # Disable interactive mode in production (saves resources)
+    enable_interactive_mode: false
